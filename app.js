@@ -65,7 +65,7 @@ class ProxyServer {
                 this.refreshCache(domain);
             }
             // Reload config
-            loadConfig();
+            this.loadConfig();
         }, 60 * 1000); 
 
         // Auto delete cache entries after an hour of inactivity
