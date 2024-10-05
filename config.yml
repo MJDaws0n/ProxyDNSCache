@@ -1,0 +1,10 @@
+certs:
+  - "mjdawson.net":
+      - cert: "/etc/letsencrypt/live/mjdawson.net-0001/fullchain.pem"
+        key: "/etc/letsencrypt/live/mjdawson.net-0001/privkey.pem"
+  - "*.mjdawson.net":
+      - cert: "/etc/letsencrypt/live/mjdawson.net-0001/fullchain.pem"
+        key: "/etc/letsencrypt/live/mjdawson.net-0001/privkey.pem"
+  - "panel.webworkshub.online":
+      - cert: "/etc/letsencrypt/live/panel.webworkshub.online/fullchain.pem"
+        key: "/etc/letsencrypt/live/panel.webworkshub.online/privkey.pem"

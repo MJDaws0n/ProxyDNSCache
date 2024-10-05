@@ -1,0 +1,12 @@
+{
+  "name": "ProxyDNSCache",
+  "version": "1.0.0",
+  "bin": "app.js",
+  "dependencies": {
+    "dns": "^0.2.2",
+    "express": "^4.21.0",
+    "fs": "^0.0.1-security",
+    "js-yaml": "^4.1.0",
+    "tls": "^0.0.1"
+  }
+}
