@@ -72,8 +72,14 @@ Environment=NODE_ENV=production
 [Install]
 WantedBy=multi-user.target
 ```
-Edit the paths and username as necessary. Afterward, enable and start the service:
+Edit the paths and username as necessary.
 
+Next update file permissions
+```bash
+chmod +x /path/to/your/ProxyDNSCache-linux
+```
+
+Afterward, enable and start the service:
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl start ProxyDNSCache
