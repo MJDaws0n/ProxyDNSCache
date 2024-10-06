@@ -1,5 +1,8 @@
 # ProxyDNSCache
 
+# NOTICE
+PLEASE MAKE SURE YOU HAVE YOU `config.yml` AND `cache.json` IN THE SAME FOLDER AS YOUR EXECUTABLE OR IT WILL NOT WORK.
+
 ## Overview
 ProxyDNSCache is a lightweight TCP proxy designed to handle redirection of HTTP (port 80) and HTTPS (port 443) traffic. It forwards HTTP traffic to HTTPS and routes HTTPS traffic to the appropriate domain. For example, it can forward traffic from `https://example.com/` to `localhost:304`.
 
