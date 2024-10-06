@@ -2,7 +2,9 @@
 
 # NOTICE
 - **PLEASE MAKE SURE YOU HAVE YOU `config.yml` AND `cache.json` IN THE SAME FOLDER AS YOUR EXECUTABLE OR IT WILL NOT WORK.**
-- **If your website is running NGINX, you can add this to your config to all the proxy to work properly:**\Add this just bellow charset (close to the top):
+- **If your website is running NGINX, you can add this to your config to all the proxy to work properly:**
+
+  Add this just bellow charset (close to the top):
   ```nginx
   set_real_ip_from 127.0.0.1;
   real_ip_header X-Forwarded-For;
