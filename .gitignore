@@ -1,2 +1,5 @@
 node_modules/*
 .vscode/*
+ProxyDNSCache-linux
+ProxyDNSCache-macos
+ProxyDNSCache-win.exe

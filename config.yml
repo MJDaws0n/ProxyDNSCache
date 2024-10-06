@@ -8,3 +8,9 @@ certs:
   - "panel.webworkshub.online":
       - cert: "/etc/letsencrypt/live/panel.webworkshub.online/fullchain.pem"
         key: "/etc/letsencrypt/live/panel.webworkshub.online/privkey.pem"
+  - "www.linsladegalaxygirlsfc.com":
+      - cert: "/etc/letsencrypt/live/www.linsladegalaxygirlsfc.com/fullchain.pem"
+        key: "/etc/letsencrypt/live/www.linsladegalaxygirlsfc.com/privkey.pem"
+  - "linsladegalaxygirlsfc.com":
+      - cert: "/etc/letsencrypt/live/linsladegalaxygirlsfc.com/fullchain.pem"
+        key: "/etc/letsencrypt/live/linsladegalaxygirlsfc.com/privkey.pem"

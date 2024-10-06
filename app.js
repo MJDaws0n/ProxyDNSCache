@@ -68,18 +68,18 @@ class ProxyServer {
             this.loadConfig();
         }, 60 * 1000); 
 
-        // Auto delete cache entries after an hour of inactivity
+        // Auto delete cache entries after 96 hours of inactivity
         setInterval(() => {
             const now = Date.now();
             for (const domain in this.lastAccessed) {
-                if (now - this.lastAccessed[domain] > 60 * 60 * 1000) { // 1 hour
+                if (now - this.lastAccessed[domain] > 96 * 60 * 60 * 1000) {
                     console.log(`Removing cached entry for ${domain} due to inactivity.`);
                     delete this.cache[domain];
                     delete this.lastAccessed[domain];
                 }
             }
             fs.writeFileSync(this.cachePath, JSON.stringify(this.cache, null, 2));
-        }, 60 * 1000);
+        }, 60 * 1000);        
     }
 
     refreshCache(domain) {
@@ -233,9 +233,9 @@ class ProxyServer {
     cleanIPAddress(ip) {
         // Check if the IP address is in IPv4-mapped IPv6 format
         if (ip.startsWith('::ffff:')) {
-            return ip.slice(7); // Remove the ::ffff: prefix
+            return ip.slice(7);
         }
-        return ip; // Return the original IP if it's not in that format
+        return ip;
     }
 
     appendClientIPToHeaders(requestData, clientIP) {
@@ -259,8 +259,8 @@ class ProxyServer {
             // Check for WebSocket upgrade request
             if (requestData.includes('Upgrade: websocket')) {
                 console.log(`WebSocket Upgrade Request from ${clientSocket.remoteAddress}`);
-                targetSocket.write(data);  // Forward the WebSocket upgrade request as is
-                return;  // Exit early for WebSocket upgrade handling
+                targetSocket.write(data);
+                return;
             }
     
             // Check if it's an HTTP request
