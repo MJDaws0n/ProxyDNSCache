@@ -182,6 +182,10 @@ class ProxyServer {
         server.listen(443, () => {
             console.log('Server listening on port 443');
         });
+
+        server2.listen(441, () => {
+            console.log('Server listening on port 441');
+        });
     }
 
     handleConnection(socket) {
