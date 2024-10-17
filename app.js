@@ -165,8 +165,25 @@ class ProxyServer {
             }
         }, (socket) => { this.handleConnection(socket); });
 
+        const server2 = tls.createServer({
+            SNICallback: (hostname, cb) => {
+                const cert = this.getCertAndKey(this.config['certs'], hostname);
+                if (cert === null) {
+                    return cb(new Error('No certificate found for hostname'));
+                }
+                const config = {
+                    cert: fs.readFileSync(cert[0].cert),
+                    key: fs.readFileSync(cert[0].key)
+                };
+                cb(null, tls.createSecureContext(config));
+            }
+        }, (socket) => { this.handleConnection(socket); });
+
         server.listen(443, () => {
             console.log('Server listening on port 443');
+        });
+        server2.listen(441, () => {
+            console.log('Server listening on port 441');
         });
     }
 
