@@ -150,7 +150,7 @@ class ProxyServer {
         return null;
     }
 
-    setupServer() {
+ setupServer() {
         const server = tls.createServer({
             SNICallback: (hostname, cb) => {
                 const cert = this.getCertAndKey(this.config['certs'], hostname);
@@ -165,7 +165,7 @@ class ProxyServer {
             }
         }, (socket) => { this.handleConnection(socket); });
 
-        const server2 = tls.createServer({
+       const server2 = tls.createServer({
             SNICallback: (hostname, cb) => {
                 const cert = this.getCertAndKey(this.config['certs'], hostname);
                 if (cert === null) {
@@ -181,9 +181,6 @@ class ProxyServer {
 
         server.listen(443, () => {
             console.log('Server listening on port 443');
-        });
-        server2.listen(441, () => {
-            console.log('Server listening on port 441');
         });
     }
 
