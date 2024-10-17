@@ -151,26 +151,7 @@ class ProxyServer {
     }
 
     setupServer() {
-        // Server for port 443
-        const server443 = tls.createServer({
-            SNICallback: (hostname, cb) => {
-                const cert = this.getCertAndKey(this.config['certs'], hostname            if (cert === null) {
-                    return cb(new Error('No certificate found for hostname'));
-                }
-                const config = {
-                    cert: fs.readFileSync(cert[0].cert),
-                    key: fs.readFileSync(cert[0].key)
-                };
-                cb(null, tls.createSecureContext(config));
-            }
-        }, (socket) => { this.handleConnection(socket); });
-    
-        server443.listen(443, () => {
-            console.log('Server listening on port 443');
-        });
-    
-        // Server port 441
-        const server441 = tls.createServer({
+        const server = tls.createServer({
             SNICallback: (hostname, cb) => {
                 const cert = this.getCertAndKey(this.config['certs'], hostname);
                 if (cert === null) {
@@ -181,10 +162,28 @@ class ProxyServer {
                     key: fs.readFileSync(cert[0].key)
                 };
                 cb(null, tls.createSecureContext(config));
-         }
+            }
         }, (socket) => { this.handleConnection(socket); });
-    
-        server441.listen(441, () => {
+
+        server.listen(443, () => {
+            console.log('Server listening on port 443');
+        });
+
+       const server2 = tls.createServer({
+            SNICallback: (hostname, cb) => {
+                const cert = this.getCertAndKey(this.config['certs'], hostname);
+                if (cert === null) {
+                    return cb(new Error('No certificate found for hostname'));
+                }
+                const config = {
+                    cert: fs.readFileSync(cert[0].cert),
+                    key: fs.readFileSync(cert[0].key)
+                };
+                cb(null, tls.createSecureContext(config));
+            }
+        }, (socket) => { this.handleConnection(socket); });
+
+        server2.listen(441, () => {
             console.log('Server listening on port 441');
         });
     }
