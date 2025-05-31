@@ -179,6 +179,14 @@ class ProxyServer {
             }
         }, (socket) => { this.handleConnection(socket); });
 
+        server.on('error', (err) => {
+            console.error('TLS server error:', err);
+        });
+    
+        server2.on('error', (err) => {
+            console.error('TLS server2 error:', err);
+        });
+
         server.listen(443, () => {
             console.log('Server listening on port 443');
         });
