@@ -1,6 +1,7 @@
 # ProxyDNSCache
 
 # NOTICE
+- **DNS SERVERS DO NOT UPDATE INSTANTLY, IF YOU SET IT UP WRONG, YOU WILL HAVE TO WAIT AROUND 30 MINUTES FOR THEM TO RE-CACHE. IT IS NOT AN ISSUE WITH THE APP**
 - **PLEASE MAKE SURE YOU HAVE YOU `config.yml` AND `cache.json` IN THE SAME FOLDER AS YOUR EXECUTABLE OR IT WILL NOT WORK.**
 - **If your website is running NGINX, you can add this to your config to all the proxy to work properly:**
 
