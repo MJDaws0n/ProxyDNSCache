@@ -4,7 +4,7 @@ const dns = require('dns');
 const yaml = require('js-yaml');
 const net = require('net');
 const http = require('http');
-dns.setServers(['8.8.8.8']);
+dns.setServers(['1.1.1.1']);
 
 class ProxyServer {
     constructor(configPath, cachePath) {
