@@ -196,7 +196,7 @@ To build ProxyDNSCache from the source, follow these steps:
       # Install plugin
       pip install certbot-dns-cloudflare
 
-      # Got no clue how you can exit this, so try ctrl + c, or for me typing exit took me out of root but it worked
+      # Exit by typing deactivate
       ```
   5.  Generate a cloudflare API key that has read/write/delete access to the DNS records of the domain
   6.  Create a cloudflare.ini file in a safe place
