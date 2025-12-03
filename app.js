@@ -271,8 +271,10 @@ class ProxyServer {
         // Extract the Host header from the original request
         let hostHeader = '';
         for (let i = 1; i < lines.length; i++) {
-            if (lines[i].toLowerCase().startsWith('host:')) {
-                hostHeader = lines[i].substring(5).trim();
+            const line = lines[i];
+            const colonIndex = line.indexOf(':');
+            if (colonIndex > 0 && line.substring(0, colonIndex).toLowerCase() === 'host') {
+                hostHeader = line.substring(colonIndex + 1).trim();
                 break;
             }
         }
@@ -280,15 +282,20 @@ class ProxyServer {
         // Determine the port based on the local port the client connected to
         const port = clientSocket.localPort || 443;
     
-        // Add proxy headers after the request line
-        lines.splice(1, 0, `X-Forwarded-For: ${clientIP}`);
-        lines.splice(2, 0, `X-Forwarded-Proto: https`);
+        // Collect all proxy headers to add
+        const proxyHeaders = [
+            `X-Forwarded-For: ${clientIP}`,
+            `X-Forwarded-Proto: https`,
+            `X-Forwarded-Port: ${port}`
+        ];
         
+        // Add X-Forwarded-Host if we found a Host header
         if (hostHeader) {
-            lines.splice(3, 0, `X-Forwarded-Host: ${hostHeader}`);
+            proxyHeaders.push(`X-Forwarded-Host: ${hostHeader}`);
         }
-        
-        lines.splice(hostHeader ? 4 : 3, 0, `X-Forwarded-Port: ${port}`);
+    
+        // Insert all proxy headers after the request line
+        lines.splice(1, 0, ...proxyHeaders);
     
         // Reconstruct the request data with the modified headers
         return lines.join('\r\n');
