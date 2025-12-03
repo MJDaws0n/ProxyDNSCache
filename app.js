@@ -264,11 +264,31 @@ class ProxyServer {
         return ip;
     }
 
-    appendClientIPToHeaders(requestData, clientIP) {
+    appendClientIPToHeaders(requestData, clientIP, clientSocket) {
         // Split the request data into lines
         const lines = requestData.split('\r\n');
     
+        // Extract the Host header from the original request
+        let hostHeader = '';
+        for (let i = 1; i < lines.length; i++) {
+            if (lines[i].toLowerCase().startsWith('host:')) {
+                hostHeader = lines[i].substring(5).trim();
+                break;
+            }
+        }
+    
+        // Determine the port based on the local port the client connected to
+        const port = clientSocket.localPort || 443;
+    
+        // Add proxy headers after the request line
         lines.splice(1, 0, `X-Forwarded-For: ${clientIP}`);
+        lines.splice(2, 0, `X-Forwarded-Proto: https`);
+        
+        if (hostHeader) {
+            lines.splice(3, 0, `X-Forwarded-Host: ${hostHeader}`);
+        }
+        
+        lines.splice(hostHeader ? 4 : 3, 0, `X-Forwarded-Port: ${port}`);
     
         // Reconstruct the request data with the modified headers
         return lines.join('\r\n');
@@ -292,7 +312,7 @@ class ProxyServer {
             // Check if it's an HTTP request
             if (this.isHttpRequest(requestData)) {
                 const clientIP = this.cleanIPAddress(clientSocket.remoteAddress);
-                const updatedData = this.appendClientIPToHeaders(requestData, clientIP);
+                const updatedData = this.appendClientIPToHeaders(requestData, clientIP, clientSocket);
                 targetSocket.write(updatedData);
             } else {
                 // Not an HTTP request, just forward the data
