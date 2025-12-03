@@ -272,6 +272,10 @@ class ProxyServer {
         let hostHeader = '';
         for (let i = 1; i < lines.length; i++) {
             const line = lines[i];
+            // Empty line indicates end of headers
+            if (line === '') {
+                break;
+            }
             const colonIndex = line.indexOf(':');
             if (colonIndex > 0 && line.substring(0, colonIndex).toLowerCase() === 'host') {
                 hostHeader = line.substring(colonIndex + 1).trim();
