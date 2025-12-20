@@ -1,203 +1,149 @@
 # ProxyDNSCache
 
-# NOTICE
-- **DNS SERVERS DO NOT UPDATE INSTANTLY, IF YOU SET IT UP WRONG, YOU WILL HAVE TO WAIT AROUND 30 MINUTES FOR THEM TO RE-CACHE. IT IS NOT AN ISSUE WITH THE APP**
-- **PLEASE MAKE SURE YOU HAVE YOU `config.yml` AND `cache.json` IN THE SAME FOLDER AS YOUR EXECUTABLE OR IT WILL NOT WORK.**
-- **Sorry I cannot build for arch right now, so you must run through node js or build your self**
-- **If your website is running NGINX, you can add this to your config to all the proxy to work properly:**
+ProxyDNSCache is a small, production-friendly TLS SNI proxy that routes inbound HTTPS connections to a backend discovered via DNS SRV records.
 
-  Add this just bellow charset (close to the top):
-  ```nginx
-  set_real_ip_from 127.0.0.1;
-  real_ip_header X-Forwarded-For;
-  ```
-  Add this to inside your location ~ \.php$ { (at the bottom of it):
-  ```nginx
-  fastcgi_param HTTPS on;
-  ```
-  Example:
-  ```nginx
-  server {
-    listen 81;
-    server_name localhost;
+It terminates TLS (using your certificates via SNI), then forwards the raw TCP stream to the resolved target. For HTTP traffic, it also injects standard `X-Forwarded-*` headers so upstream apps (NGINX, PHP-FPM, etc.) can log the real client IP.
 
-    root /var/www/pterodactyl/public;
-    index index.html index.htm index.php;
-    charset utf-8;
+## Key behavior
 
-    set_real_ip_from 127.0.0.1;
-    real_ip_header X-Forwarded-For;
+### DNS routing
+For an incoming SNI hostname `example.com`, ProxyDNSCache looks up:
 
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
+`_pdcache._tcp.example.com`
 
-    location = /favicon.ico { access_log off; log_not_found off; }
-    location = /robots.txt  { access_log off; log_not_found off; }
+The first SRV record returned is used as the proxy destination (`target:port`).
 
-    access_log off;
-    error_log  /var/log/nginx/pterodactyl.app-error.log error;
+### Cache policy (updated)
+Cache entries are refreshed and cleaned on a 1-minute tick:
 
-    # allow larger file uploads and longer script runtimes
-    client_max_body_size 100m;
-    client_body_timeout 120s;
+- If the domain was accessed within the last **1 hour**, its SRV record is refreshed **every minute**.
+- If the domain was accessed more than **1 hour** ago (but within **24 hours**), it is refreshed **every 15 minutes**.
+- If the domain was not accessed for more than **24 hours**, it is **removed** from `cache.json`.
 
-    sendfile off;
+`cache.json` is backward-compatible: older entries without timestamps still work and will be upgraded as the service runs.
 
-    location ~ \.php$ {
-        fastcgi_split_path_info ^(.+\.php)(/.+)$;
-        fastcgi_pass unix:/run/php/php8.1-fpm.sock;
-        fastcgi_index index.php;
-        include fastcgi_params;
-        fastcgi_param PHP_VALUE "upload_max_filesize = 100M \n post_max_size=100M";
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        fastcgi_param HTTP_PROXY "";
-        fastcgi_intercept_errors off;
-        fastcgi_buffer_size 16k;
-        fastcgi_buffers 4 16k;
-        fastcgi_connect_timeout 300;
-        fastcgi_send_timeout 300;
-        fastcgi_read_timeout 300;
-        fastcgi_param HTTPS on;
-    }
+## Files
 
-    location ~ /\.ht {
-        deny all;
-    }
-  }
-  ```
+- `config.yml`: certificate configuration (required; auto-created if missing)
+- `cache.json`: SRV lookup cache (auto-created if missing)
 
-## Overview
-ProxyDNSCache is a lightweight TCP proxy designed to handle redirection of HTTP (port 80) and HTTPS (port 443) traffic. It forwards HTTP traffic to HTTPS and routes HTTPS traffic to the appropriate domain. For example, it can forward traffic from `https://example.com/` to `localhost:304`.
+Both files are hot-reloaded when they change.
 
-This solution also ensures that the original client IP for HTTP connections is forwarded via the `X-Forwarded-For` header. You'll need to configure your web server (e.g., NGINX) to respect this header if required.
+## Configuration (unchanged schema)
 
-## Features
-- Redirects all HTTP traffic from port 80 to HTTPS (port 443).
-- Supports routing of HTTPS connections to specific domains or subdomains.
-- Adds `X-Forwarded-For` headers to HTTP requests for logging original client IPs.
-- Customizable configuration with support for multiple certificates and domains.
-
-## Requirements
-- A valid SRV record for DNS setup.
-- A valid SSL certificate for each domain you wish to proxy.
-
-## Installation and Setup
-
-### Step 1: Configure DNS
-Create an SRV record for your domain. For example:
-
-```
-_pdcache._tcp.example.com
-````
-
-Replace `example.com` with your domain or subdomain. Set the priority and weight to `10`, and specify the port and target. The target can be `localhost`, but do **not** use an IP address.
-
-### Step 2: Configure `config.yml`
-Edit the `config.yml` file to specify the SSL certificates for your domains. An example configuration looks like:
+Example `config.yml`:
 
 ```yaml
 certs:
-  - "example.com":
-      - cert: "/path/to/certs/fullchain.pem"
-        key: "/path/to/certs/privkey.pem"
-  - "*.example.com":
-      - cert: "/path/to/certs/fullchain.pem"
-        key: "/path/to/certs/privkey.pem"
+    - "example.com":
+            - cert: "/etc/letsencrypt/live/example.com/fullchain.pem"
+                key: "/etc/letsencrypt/live/example.com/privkey.pem"
+    - "*.example.com":
+            - cert: "/etc/letsencrypt/live/example.com/fullchain.pem"
+                key: "/etc/letsencrypt/live/example.com/privkey.pem"
 ```
-For each domain you want to proxy, replace example.com with your actual domain and provide the paths to the SSL certificate and key.
 
-### Step 3: Install and Run the Service
-#### Linux / macOS
-Download the appropriate executable:
+Optional settings (new, but not required):
 
-- For Linux: ProxyDNSCache-linux
-- For macOS: ProxyDNSCache-macos
+```yaml
+# Which DNS resolvers to use (defaults to Cloudflare)
+dnsServers:
+    - "1.1.1.1"
 
-To run the service automatically, create a systemd service:
+# TLS ports to listen on (defaults to [443, 441])
+tlsPorts:
+    - 443
+    - 441
+
+# HTTP redirect port (defaults to 80)
+httpPort: 80
+```
+
+## Run
+
+Install:
 
 ```bash
-sudo nano /etc/systemd/system/ProxyDNSCache.service
+npm install
 ```
-Then, paste the following configuration:
 
-```ini
-[Unit]
-Description=ProxyDNSCache Service
-After=network.target
+Start:
 
-[Service]
-ExecStart=/path/to/your/ProxyDNSCache-linux
-WorkingDirectory=/path/to/your/
-Restart=always
-User=your-username
-Environment=NODE_ENV=production
-
-[Install]
-WantedBy=multi-user.target
-```
-Edit the paths and username as necessary.
-
-Next update file permissions
 ```bash
-chmod +x /path/to/your/ProxyDNSCache-linux
+npm start
 ```
 
-Afterward, enable and start the service:
+Environment overrides (optional):
+
+- `CONFIG_PATH`: path to `config.yml`
+- `CACHE_PATH`: path to `cache.json`
+- `HTTP_PORT`: redirect server port
+
+## NGINX notes (real client IP)
+
+If your upstream is behind NGINX and you want correct client IP logging:
+
+```nginx
+set_real_ip_from 127.0.0.1;
+real_ip_header X-Forwarded-For;
+```
+
+For PHP backends, you may also want:
+
+```nginx
+fastcgi_param HTTPS on;
+```
+
+## Tests
+
+Unit tests cover the pure logic (wildcard hostname matching, header injection, cache policy). Network integration tests are intentionally not included.
+
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl start ProxyDNSCache
-sudo systemctl enable ProxyDNSCache
+npm test
 ```
-#### Windows
-For Windows, use the Node.js version as the executable may not work properly. Run the following commands to install and run the project:
+
+## Build (standalone binaries)
+
+This project supports building standalone executables using `pkg`.
+
+Install dependencies:
+
 ```bash
-nvm install 16
-nvm use 16
-npm install -g pkg
-pkg .
+npm install
 ```
-You can then run the proxy directly using Node.js or build your own executable.
+
+Build all configured targets:
+
 ```bash
-.\ProxyDNSCache-win.exe
+npm run build
 ```
-## Building from Source
-To build ProxyDNSCache from the source, follow these steps:
 
-1.  Install Node.js version 16 using NVM:
-    ```bash
-    nvm install 16
-    nvm use 16
-    ```
+Build specific targets:
 
-2.  Install dependencies:
-    ```bash
-    npm install
-    ```
+```bash
+npm run build:mac
+npm run build:linux
+```
 
-3. Use pkg to build the executable:
-    ```bash
-    npm install -g pkg
-    pkg .
-    ```
+Artifacts are written to the `dist/` folder.
 
-## How to setup auto renew for wildcard domains with cloudlfare and certbot
-  1.  If you have certbot installed remove it (this is as it's most likley outdated)
-      ```bash
-      sudo apt-get remove certbot
-      sudo apt autoremove
-      ```
-  3.  Follow these instructions to install certbot using python for linux (do the respective for windows and mac) https://certbot.eff.org/instructions?ws=other&os=pip
-  4.  Install cloudflare plugin
-      ```bash
-      # Enter python vertual environment
-      source /opt/certbot/bin/activate
+Expected outputs:
 
-      # Install plugin
-      pip install certbot-dns-cloudflare
+- `dist/proxydnscache-macos-x64`
+- `dist/proxydnscache-macos-arm64`
+- `dist/proxydnscache-linux-x64`
+- `dist/proxydnscache-linux-arm64`
 
-      # Exit by typing deactivate
-      ```
+### Notes on building Linux binaries from macOS
+
+`pkg` *can* build for multiple targets, but cross-building is not always reliable for every platform/architecture combination (especially Linux `arm64`) depending on which prebuilt Node runtimes `pkg` can fetch.
+
+If `npm run build:linux` fails on macOS for `linux-arm64`, the most reliable option is to build on a Linux machine/runner.
+
+Recommended approach:
+
+- Use GitHub Actions (or any CI) with a Linux runner to build Linux artifacts.
+- Optionally build Linux `arm64` on an ARM runner (or via QEMU), depending on your CI setup.
   5.  Generate a cloudflare API key that has read/write/delete access to the DNS records of the domain
   6.  Create a cloudflare.ini file in a safe place
   7.  File should look like

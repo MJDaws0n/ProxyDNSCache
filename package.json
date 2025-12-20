@@ -1,12 +1,30 @@
 {
   "name": "proxydnscache",
   "version": "1.0.0",
+  "main": "app.js",
   "bin": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "jest",
+    "build": "npm run build:mac && npm run build:linux",
+    "build:mac": "npm run build:mac:x64 && npm run build:mac:arm64",
+    "build:mac:x64": "pkg . --targets node16-macos-x64 --output dist/proxydnscache-macos-x64",
+    "build:mac:arm64": "pkg . --targets node16-macos-arm64 --output dist/proxydnscache-macos-arm64",
+    "build:linux": "npm run build:linux:x64 && npm run build:linux:arm64",
+    "build:linux:x64": "pkg . --targets node16-linux-x64 --output dist/proxydnscache-linux-x64",
+    "build:linux:arm64": "pkg . --targets node16-linux-arm64 --output dist/proxydnscache-linux-arm64"
+  },
   "dependencies": {
-    "dns": "^0.2.2",
-    "express": "^4.21.1",
-    "fs": "^0.0.1-security",
-    "js-yaml": "^4.1.1",
-    "tls": "^0.0.1"
+    "js-yaml": "^4.1.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "pkg": "^5.8.1"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "pkg": {
+    "outputPath": "dist"
   }
 }
