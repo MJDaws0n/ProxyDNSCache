@@ -73,6 +73,54 @@ Start:
 npm start
 ```
 
+## Run as a systemd service (Linux)
+
+1) Create the unit file:
+
+```bash
+sudo nano /etc/systemd/system/ProxyDNSCache.service
+```
+
+2) Paste the following (minimal) service definition:
+
+```ini
+[Unit]
+Description=ProxyDNSCache
+After=network.target
+
+[Service]
+WorkingDirectory=/home/ProxyDNSCache
+ExecStart=/home/ProxyDNSCache/ProxyDNSCache-linux
+Restart=always
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Notes:
+
+- `config.yml` and `cache.json` are expected in `WorkingDirectory` (and will be auto-created if missing).
+- If you want to store them elsewhere, set `CONFIG_PATH` / `CACHE_PATH` environment variables.
+- Binding to ports 80/443 typically requires root or capabilities. If you run as non-root, you can grant the binary permission to bind privileged ports:
+
+```bash
+sudo setcap 'cap_net_bind_service=+ep' /home/ProxyDNSCache/ProxyDNSCache-linux
+```
+
+3) Enable and start:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now ProxyDNSCache
+```
+
+4) View logs:
+
+```bash
+sudo journalctl -u ProxyDNSCache -f
+```
+
 Environment overrides (optional):
 
 - `CONFIG_PATH`: path to `config.yml`
