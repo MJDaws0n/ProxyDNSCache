@@ -73,6 +73,39 @@ Start:
 npm start
 ```
 
+## How to setup auto renew for wildcard domains with cloudlfare and certbot
+  1.  If you have certbot installed remove it (this is as it's most likley outdated)
+      ```bash
+      sudo apt-get remove certbot
+      sudo apt autoremove
+      ```
+  3.  Follow these instructions to install certbot using python for linux (do the respective for windows and mac) https://certbot.eff.org/instructions?ws=other&os=pip
+  4.  Install cloudflare plugin
+      ```bash
+      # Enter python vertual environment
+      source /opt/certbot/bin/activate
+
+      # Install plugin
+      pip install certbot-dns-cloudflare
+
+      # Exit by typing deactivate
+      ```
+  5.  Generate a cloudflare API key that has read/write/delete access to the DNS records of the domain
+  6.  Create a cloudflare.ini file in a safe place
+  7.  File should look like
+      ```env
+      dns_cloudflare_api_token = KEY HERE
+      ```
+  8.  Set the files permissions
+      ```bash
+      sudo chmod 600 /path/to/cloudflare.ini
+      ```
+  9.  Generate certificate, remember to change the cloudflare path and the domain.com
+      ```bash
+      sudo certbot certonly --dns-cloudflare --dns-cloudflare-credentials /path/to/cloudflare.ini --preferred-challenges dns -d domain.com -d '*.domain.com'
+      ```
+  10.  Autorenewal will work as long as you are only using this app the manage certificates.
+
 ## Run as a systemd service (Linux)
 
 1) Create the unit file:
